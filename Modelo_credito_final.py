@@ -103,39 +103,39 @@ y_pred = np.concatenate(y_pred_batches)
 
 ##########################################################################################
 # Iniciar la interfaz Streamlit
-st.title("Modelo de predicción de Calificación Crediticia")
+st.title("Credit Score Prediction Model")
 
-# Mostrar estadísticas descriptivas
-st.subheader("Estadísticas descriptivas")
+# Display descriptive statistics
+st.subheader("Descriptive Statistics")
 fig, ax = plt.subplots()
 ax.hist(data["loan_amnt"], bins=20, color="blue", edgecolor="black")
-ax.set_title("Histograma de los montos de créditos")
-ax.set_xlabel("Monto")
-ax.set_ylabel("Frecuencia")
+ax.set_title("Histogram of Loan Amounts")
+ax.set_xlabel("Amount")
+ax.set_ylabel("Frequency")
 st.pyplot(fig)
 
-# Mostrar resultados del modelo
+# Display model results
 st.write("Accuracy:", accuracy_score(y_test, y_pred))
 st.write("Classification Report:\n", classification_report(y_test, y_pred))
 
 ##########################################################################################
-# Ingreso de nuevos datos
-loan_amnt = st.sidebar.number_input("Monto del crédito (en USD): ")
-annual_inc = st.sidebar.number_input("Ingresos anuales: ")
-int_rate = st.sidebar.number_input("Tasa de interés (%): ")
+# Input new data
+loan_amnt = st.sidebar.number_input("Loan amount (USD): ")
+annual_inc = st.sidebar.number_input("Annual income: ")
+int_rate = st.sidebar.number_input("Interest rate (%): ")
 
 meses = ["36 months", "60 months"]
-term = st.sidebar.selectbox("Ingresar plazo del crédito (en meses)", meses)
+term = st.sidebar.selectbox("Loan term (in months):", meses)
 
 periodo_trabajo = ["<1 year", "1 year", "2 years", "3 years", "4 years", "5 years", "6 years",
                    "7 years", "8 years", "9 years", "10+ years"]
-emp_length = st.sidebar.selectbox("Ingresa cuántos años lleva en su actual trabajo: ", periodo_trabajo)
+emp_length = st.sidebar.selectbox("Years in current job:", periodo_trabajo)
 
 proposito = ["Business", "Credit card refinancing", "Debt consolidation", "Car financing", "Major purchase",
              "Home improvement", "Home buying", "Medical expenses", "Vacation", "Other"]
-title = st.sidebar.selectbox("Propósito del crédito: ", proposito)
+title = st.sidebar.selectbox("Loan purpose:", proposito)
 
-# Crear dataframe con los datos ingresados
+# Create dataframe with input data
 data_input = pd.DataFrame({
     "loan_amnt": [loan_amnt],
     'annual_inc': [annual_inc],
@@ -147,24 +147,24 @@ data_input = pd.DataFrame({
 
 data_input = pd.get_dummies(data_input, columns=['term', 'emp_length', 'title'], drop_first=True)
 
-# Asegurar que las columnas coincidan
+# Ensure columns match
 missing_cols = set(X.columns) - set(data_input.columns)
 for col in missing_cols:
     data_input[col] = 0
 data_input = data_input[X.columns]
 
-# Escalar e imputar los datos ingresados
+# Scale and impute input data
 data_input = imputer.transform(data_input)
 data_input = scaler.transform(data_input)
 
-# Predicción
+# Prediction
 prediccion = clf.predict(data_input)
-st.write("La calificación crediticia predicha es:", prediccion[0])
+st.write("The predicted credit score is:", prediccion[0])
 
-# Predicción crediticia
-def prediccion_credito(prediccion, loan_amnt, annual_inc):
-    # Rangos de umbral por categoría
-    rangos = {
+# Credit approval prediction
+def credit_approval(prediccion, loan_amnt, annual_inc):
+    # Threshold ranges by category
+    ranges = {
         "A": 0.6,
         "B": 0.45,
         "C": 0.4,
@@ -174,25 +174,25 @@ def prediccion_credito(prediccion, loan_amnt, annual_inc):
         "G": 0.2
     }
 
-    # Obtener umbral para la categoría predicha
-    umbral = rangos.get(prediccion[0], 0)
+    # Get threshold for predicted category
+    threshold = ranges.get(prediccion[0], 0)
 
-    # Evitar división por cero en caso de ingresos anuales igual a 0
+    # Avoid division by zero if annual income is 0
     if annual_inc == 0:
-        return "Error: Los ingresos anuales no pueden ser cero."
+        return "Error: Annual income cannot be zero."
 
-    # Calcular ratio de préstamo sobre ingreso
+    # Calculate loan-to-income ratio
     ratio = loan_amnt / annual_inc
 
-    # Decidir aprobación basada en el ratio
-    if ratio <= umbral:
-        return "Crédito aprobado"
+    # Decide approval based on ratio
+    if ratio <= threshold:
+        return "Credit approved"
     else:
-        return "Crédito no aprobado"
+        return "Credit not approved"
 
-# Llamar a la función de predicción crediticia
-observacion = prediccion_credito(prediccion, loan_amnt, annual_inc)
-st.write(observacion)
+# Call credit approval function
+observation = credit_approval(prediccion, loan_amnt, annual_inc)
+st.write(observation)
 
 
-# python -m streamlit run "C:\1 A documentos erick\ITESO\8vo sem\Modelos de crédito\Proyectos finales\proyecto_cuantitativas-main\proyecto_cuantitativas-main\proyecto_quant_str.py"
+# python -m streamlit run "C:\1 A documentos erick\ITESO\8vo sem\Modelos de crédito\Proyectos finales\Proyecto final modelos\Modelo_credito_final.py"
